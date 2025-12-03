@@ -326,7 +326,7 @@
                                     <tr class="bg-indigo-50">
                                         <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[20%]">職涯階段</th>
                                         <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[50%]">技能提升與發展重点</th>
+                                        <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[50%]">技能提升與發展重點</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -446,7 +446,7 @@
         <!-- Charts Section -->
         <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div class="chart-container bg-white rounded-lg shadow-md p-4 md:p-8">
-                <h2 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">核心能力比較分析</h2>
+                <h2 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">核心能力比較分析(由AI生成)</h2>
                 <div class="w-full max-w-3xl mx-auto">
                     <canvas id="competencyRadarChart"></canvas>
                 </div>
@@ -465,14 +465,14 @@
             <div class="bg-white rounded-lg shadow-md p-6 md:p-10 text-center">
                 <h2 class="text-2xl md:text-3xl font-bold text-blue-800 mb-4">系友職涯深度分享</h2>
                 <p class="text-gray-600 text-lg mb-6">
-                    您是否願意回校參與職涯座談，給學弟妹們更具體的啟發與幫助？<br>
-                    請留下您的聯絡資料！
+                    您是否願意分享更詳細的職涯發展故事，給學弟妹們更具體的啟發與幫助？<br>
+                    我們誠摯地感謝您無私的奉獻！
                 </p>
                 <a href="https://forms.gle/SSotUMAUUxj8ZQM19" 
                    target="_blank" 
                    rel="noopener noreferrer" 
                    class="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-lg text-lg">
-                    點此填寫資料
+                    點此填寫深度分享問卷
                 </a>
             </div>
         </div>
@@ -508,6 +508,55 @@
 
             // --- Chart.js Instance ---
             let surveyChart = null;
+            
+            // --- Role Mapping ---
+            // Maps each role to { category: 'Category Name', stage: 'Stage Name' }
+            const roleMap = {
+                // Clinical
+                '醫事檢驗師': { category: '臨床醫療', stage: '初期' },
+                '胚胎技術員': { category: '臨床醫療', stage: '初期' },
+                '資深/專科醫檢師': { category: '臨床醫療', stage: '中期' },
+                '資深胚胎技術員': { category: '臨床醫療', stage: '中期' },
+                '實驗室主管': { category: '臨床醫療', stage: '後期' },
+                '胚胎實驗室主管': { category: '臨床醫療', stage: '後期' },
+
+                // Biotech
+                '研發/QC/QA人員': { category: '生物科技產業', stage: '初期' },
+                '業務技術專員': { category: '生物科技產業', stage: '初期' },
+                '法規事務專員': { category: '生物科技產業', stage: '初期' },
+                '資深研發/專案經理': { category: '生物科技產業', stage: '中期' },
+                '業務/產品經理': { category: '生物科技產業', stage: '中期' },
+                '資深法規事務專員': { category: '生物科技產業', stage: '中期' },
+                '研發/產品總監': { category: '生物科技產業', stage: '後期' },
+                '業務總監/主管': { category: '生物科技產業', stage: '後期' },
+                '法規事務經理/總監': { category: '生物科技產業', stage: '後期' },
+
+                // Public
+                '鑑識科學人員': { category: '公職與法人機構', stage: '初期' },
+                '查驗登記審查員': { category: '公職與法人機構', stage: '初期' },
+                '資深鑑識技術員': { category: '公職與法人機構', stage: '中期' },
+                '資深審查員/股長': { category: '公職與法人機構', stage: '中期' },
+                '鑑識科學專家/主管': { category: '公職與法人機構', stage: '後期' },
+                '科長/處長/專家': { category: '公職與法人機構', stage: '後期' },
+
+                // Academic
+                '碩/博士生/研究助理': { category: '學術研究', stage: '初期' },
+                '博士後研究員/教職': { category: '學術研究', stage: '中期' },
+                '教授/研究中心主管': { category: '學術研究', stage: '後期' },
+
+                // Interdisciplinary
+                '數據分析員': { category: '跨領域專業', stage: '初期' },
+                '專利工程師': { category: '跨領域專業', stage: '初期' },
+                '研究員/助理顧問': { category: '跨領域專業', stage: '初期' },
+                '系統/生物統計分析師': { category: '跨領域專業', stage: '中期' },
+                '資深專利師/代理人': { category: '跨領域專業', stage: '中期' },
+                '招募顧問': { category: '跨領域專業', stage: '中期' },
+                '數據經理/策略顧問': { category: '跨領域專業', stage: '後期' },
+                '專利經理/法務長': { category: '跨領域專業', stage: '後期' },
+                '資深顧問/團隊主管': { category: '跨領域專業', stage: '後期' }
+            };
+
+            const categories = ['臨床醫療', '生物科技產業', '公職與法人機構', '學術研究', '跨領域專業', '其他'];
             
             // --- Tab navigation script ---
             const nav = document.getElementById('career-nav');
@@ -559,11 +608,49 @@
 
                 try {
                     const response = await fetch(GOOGLE_SCRIPT_URL);
-                    const data = await response.json();
+                    const rawData = await response.json();
                     
-                    const labels = Object.keys(data);
-                    const values = Object.values(data);
-                    
+                    // Initialize structure: { 'Category': { '初期': 0, '中期': 0, '後期': 0 } }
+                    // '其他' category just stores total count in '初期' for simplicity or separate handling
+                    const categoryStageCounts = {};
+                    categories.forEach(cat => {
+                        categoryStageCounts[cat] = { '初期': 0, '中期': 0, '後期': 0 };
+                    });
+
+                    // Process Data
+                    for (const [role, count] of Object.entries(rawData)) {
+                        const info = roleMap[role];
+                        if (info) {
+                            categoryStageCounts[info.category][info.stage] += count;
+                        } else {
+                            // User added 'Other' roles -> '其他' category, '初期' stage (as default)
+                            categoryStageCounts['其他']['初期'] += count;
+                        }
+                    }
+
+                    const labels = categories;
+                    // Prepare stacked datasets
+                    // Colors: Light -> Medium -> Dark
+                    const colorSchemes = {
+                        '臨床醫療': ['#93C5FD', '#3B82F6', '#1E40AF'], // Blue
+                        '生物科技產業': ['#6EE7B7', '#10B981', '#047857'], // Green
+                        '公職與法人機構': ['#A5B4FC', '#6366F1', '#4338CA'], // Indigo
+                        '學術研究': ['#D8B4FE', '#A855F7', '#7E22CE'], // Purple
+                        '跨領域專業': ['#5EEAD4', '#14B8A6', '#0F766E'], // Teal
+                        '其他': ['#D1D5DB', '#9CA3AF', '#4B5563'] // Gray
+                    };
+
+                    const stages = ['初期', '中期', '後期'];
+                    const datasets = stages.map((stage, index) => {
+                        return {
+                            label: stage,
+                            data: categories.map(cat => categoryStageCounts[cat][stage]),
+                            backgroundColor: categories.map(cat => colorSchemes[cat][index]),
+                            borderWidth: 0,
+                            stack: 'stack1'
+                        };
+                    });
+
                     const surveyCtx = document.getElementById('surveyChart').getContext('2d');
                     if (surveyChart) {
                         surveyChart.destroy();
@@ -572,20 +659,17 @@
                         type: 'bar',
                         data: {
                             labels: labels,
-                            datasets: [{
-                                label: '訪客人數',
-                                data: values,
-                                backgroundColor: 'rgba(239, 68, 68, 0.6)',
-                                borderColor: 'rgba(239, 68, 68, 1)',
-                                borderWidth: 1
-                            }]
+                            datasets: datasets
                         },
                         options: {
-                            indexAxis: 'y',
+                            indexAxis: 'y', // Horizontal bar chart
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
-                                legend: { display: false },
+                                legend: { 
+                                    display: true, // Show legend for Early/Mid/Late
+                                    position: 'bottom' 
+                                }, 
                                 tooltip: {
                                     titleFont: { family: "'Noto Sans TC', sans-serif" },
                                     bodyFont: { family: "'Noto Sans TC', sans-serif" }
@@ -593,16 +677,19 @@
                             },
                             scales: {
                                 x: {
+                                    stacked: true, // Enable stacking
                                     beginAtZero: true,
                                     ticks: {
                                         stepSize: 1
                                     }
                                 },
                                 y: {
+                                    stacked: true, // Enable stacking
                                     ticks: {
                                         font: {
                                             family: "'Noto Sans TC', sans-serif",
-                                            size: 14
+                                            size: 14,
+                                            weight: 'bold'
                                         }
                                     }
                                 }
