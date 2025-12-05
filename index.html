@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>醫學生物技術暨檢驗學系 職涯發展路徑</title>
+    <title>醫學檢驗暨生物技術學系 職涯發展路徑</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,840 +11,928 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- 
     ==================================================================
-    【重要說明】
-    此版本已升級為「雲端同步」模式。
-    
-    1. 投票數據：透過 Google Form 寫入 Tab 1。
-    2. 新增職業：透過 Google Apps Script (doPost) 寫入 Tab 2 (CustomRoles)。
-    3. 讀取數據：透過 Google Apps Script (doGet) 同時讀取 Tab 1 & Tab 2。
-
-    請確保您已經依照對話視窗中的指示：
-    1. 在 Google Sheet 新增 "CustomRoles" 工作表。
-    2. 更新了 Google Apps Script 的程式碼並【重新部署為新版本】。
+    【重要：Google Apps Script 設定說明】
+    為了讓網頁能即時顯示 Google Sheet 的統計結果，請依照以下步驟設定。
     ==================================================================
-    -->
-    <style>
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-        }
-        .tab-button.active {
-            background-color: #1D4ED8; /* bg-blue-700 */
-            color: white;
-            font-weight: 700;
-        }
-        .content-section {
-            display: none;
-        }
-        .content-section.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .content-section.active, .chart-container, .personas-section {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        
-        /* Image fade transition */
-        #category-image {
-            transition: opacity 0.3s ease-in-out;
-            opacity: 1;
-        }
-        #category-image.fade-out {
-            opacity: 0;
-        }
 
-        .survey-btn {
-            background-color: #E0E7FF;
-            color: #3730A3;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-left: 8px;
-            transition: all 0.2s ease-in-out;
-            border: 1px solid #C7D2FE;
-            cursor: pointer;
-        }
-        .survey-btn:hover {
-            background-color: #3730A3;
-            color: white;
-            transform: scale(1.1);
-        }
-        .survey-btn:active {
-            transform: scale(1);
-        }
-        #toast-notification {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #22C55E;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 1001; /* Higher than modal */
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.5s, visibility 0.5s;
-        }
-        #toast-notification.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        /* Modal styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-        .modal-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            width: 90%;
-            max-width: 500px;
-            transform: translateY(-20px);
-            transition: transform 0.3s;
-        }
-        .modal-overlay.show .modal-content {
-            transform: translateY(0);
-        }
-    </style>
-</head>
-<body class="bg-gray-100 text-gray-800">
+    **設定三：串接即時數據圖表**
 
-    <div class="container mx-auto p-4 md:p-8">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-blue-800">醫學生物技術暨檢驗學系</h1>
-            <p class="text-xl md:text-2xl text-gray-600 mt-2">互動式職涯發展路徑總覽</p>
-        </header>
+    1. **打開 Google Sheet**：
+       打開您用於【職涯點擊統計】的 Google 試算表。
 
-        <!-- Visual Image Section -->
-        <div class="mb-8 rounded-lg shadow-lg overflow-hidden bg-white">
-            <img id="category-image" 
-                 src="main_visual.jpg" 
-                 onerror="this.onerror=null; this.src='https://placehold.co/1200x400/e2e8f0/1e40af?text=Main+Visual';"
-                 alt="職涯領域示意圖" 
-                 class="w-full h-auto object-cover max-h-[400px] object-top">
-        </div>
+    2. **進入 Apps Script 編輯器**：
+       點擊頂部選單的 `擴充功能` > `Apps Script`。
+       ![步驟二](https://i.imgur.com/rS3i02B.png)
 
-        <div class="flex flex-col md:flex-row gap-8">
-            <!-- Left Navigation -->
-            <aside class="w-full md:w-1/4">
-                <nav id="career-nav" class="bg-white rounded-lg shadow-md p-4 sticky top-8">
-                    <h2 class="text-lg font-bold text-gray-700 border-b pb-2 mb-3">職涯領域類別</h2>
-                    <ul class="space-y-2">
-                        <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100 active" data-target="clinical">臨床醫療</button></li>
-                        <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100" data-target="biotech">生物科技產業</button></li>
-                        <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100" data-target="public">公職與法人機構</button></li>
-                        <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100" data-target="academic">學術研究</button></li>
-                        <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100" data-target="interdisciplinary">跨領域專業</button></li>
-                        <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100" data-target="other">其他</button></li>
-                    </ul>
-                </nav>
-            </aside>
+    3. **貼上程式碼**：
+       a. 刪除編輯器中所有預設的程式碼 (function myFunction() { ... })。
+       b. 將下方提供的【Apps Script 程式碼】完整複製並貼上到編輯器中。
+       c. 點擊上方的「儲存專案」圖示 (💾)。
+       ![步驟三](https://i.imgur.com/g8c2eUt.png)
 
-            <!-- Right Content -->
-            <main id="career-content" class="w-full md:w-3/4">
-                <!-- 臨床醫療 -->
-                <div id="clinical" class="content-section active space-y-6">
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-blue-600 text-white p-4">臨床醫事檢驗</h3>
-                        <div class="p-4 md:p-6">
-                            <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-blue-50">
-                                        <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[20%]">職涯階段</th>
-                                        <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[50%]">技能提升與發展重點</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">醫事檢驗師<button class="survey-btn" data-role="醫事檢驗師">+</button></td><td class="p-3">熟悉各科室常規檢驗流程、儀器操作與維護、品質管制、異常判讀。 累積實務經驗。</td></tr>
-                                    <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深/專科醫檢師<button class="survey-btn" data-role="資深/專科醫檢師">+</button></td><td class="p-3">專精於特定領域 (如：分子醫學、細胞病理、微生物等)，考取相關次專科證照。開始帶領新人、負責特定儀器或專案。</td></tr>
-                                    <tr><td class="p-3 font-medium">後期</td><td class="p-3">實驗室主管<button class="survey-btn" data-role="實驗室主管">+</button></td><td class="p-3">負責實驗室全面管理、預算控制、人員培訓、新技術引進、品質管理系統建立與優化。與臨床醫師合作，參與醫院決策。</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-blue-600 text-white p-4">胚胎技術 (生殖醫學)</h3>
-                        <div class="p-4 md:p-6">
-                           <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-blue-50">
-                                        <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[20%]">職涯階段</th>
-                                        <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[50%]">技能提升與發展重點</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">胚胎技術員<button class="survey-btn" data-role="胚胎技術員">+</button></td><td class="p-3">熟悉胚胎培養、精卵處理、冷凍解凍等基本操作，遵守實驗室 SOP。累積大量實作經驗。</td></tr>
-                                    <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深胚胎技術員<button class="survey-btn" data-role="資深胚胎技術員">+</button></td><td class="p-3">獨立完成高階胚胎操作技術 (如：ICSI)，負責實驗室品質管理與儀器維護。開始帶領新人。</td></tr>
-                                    <tr><td class="p-3 font-medium">後期</td><td class="p-3">胚胎實驗室主管<button class="survey-btn" data-role="胚胎實驗室主管">+</button></td><td class="p-3">負責整個胚胎實驗室的運營管理、技術創新、團隊培訓。參與生殖醫學中心的策略規劃，導入新技術。</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+       **【Apps Script 程式碼】** (請完整複製)
+       ```javascript
+       function doGet(e) {
+         const ss = SpreadsheetApp.getActiveSpreadsheet();
+         
+         // 1. 讀取投票數據 (假設在第一個工作表)
+         const voteSheet = ss.getSheets()[0]; 
+         // 【重要修正】Google Form 會在 A 欄自動加入時間戳記，
+         // 我們的職業資料通常在 B 欄。請將 "B2:B" 確認為您儲存職業的欄位。
+         const voteRange = voteSheet.getRange("B2:B"); 
+         const voteValues = voteRange.getValues().flat().filter(String);
+         
+         const counts = voteValues.reduce((acc, value) => {
+           acc[value] = (acc[value] || 0) + 1;
+           return acc;
+         }, {});
+         
+         // 2. 讀取自定義職業 (在 CustomRoles 工作表)
+         let customRoles = [];
+         let roleSheet = ss.getSheetByName("CustomRoles");
+         if (roleSheet) {
+           const lastRow = roleSheet.getLastRow();
+           if (lastRow > 1) {
+             const roleRange = roleSheet.getRange(2, 1, lastRow - 1, 1);
+             customRoles = roleRange.getValues().flat().filter(String);
+           }
+         }
+         
+         // 3. 回傳整合數據
+         const result = {
+           counts: counts,
+           customRoles: customRoles
+         };
+         
+         return ContentService.createTextOutput(JSON.stringify(result))
+           .setMimeType(ContentService.MimeType.JSON);
+       }
 
-                <!-- 生物科技產業 -->
-                <div id="biotech" class="content-section space-y-6">
-                     <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-green-600 text-white p-4">研發 / 品保品管 (QC/QA)</h3>
-                        <div class="p-4 md:p-6">
-                           <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-green-50">
-                                        <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[20%]">職涯階段</th>
-                                        <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[50%]">技能提升與發展重點</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">研發/QC/QA人員<button class="survey-btn" data-role="研發/QC/QA人員">+</button></td><td class="p-3">熟悉實驗室技術、產品開發流程、品管規範。</td></tr>
-                                    <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深研發/專案經理<button class="survey-btn" data-role="資深研發/專案經理">+</button></td><td class="p-3">主導研發專案、產品線規劃與管理。管理團隊、協調跨部門合作。累積產業人脈。</td></tr>
-                                    <tr><td class="p-3 font-medium">後期</td><td class="p-3">研發/產品總監<button class="survey-btn" data-role="研發/產品總監">+</button></td><td class="p-3">負責公司整體研發方向、產品策略。帶領大型團隊，參與公司高層決策。</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-green-600 text-white p-4">行銷業務 (Sales & Marketing)</h3>
-                        <div class="p-4 md:p-6">
-                           <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-green-50">
-                                        <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[20%]">職涯階段</th>
-                                        <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[50%]">技能提升與發展重點</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">業務技術專員<button class="survey-btn" data-role="業務技術專員">+</button></td><td class="p-3">學習產品知識、市場分析、客戶溝通與簡報技巧。</td></tr>
-                                    <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">業務/產品經理<button class="survey-btn" data-role="業務/產品經理">+</button></td><td class="p-3">負責市場策略制定、客戶關係維護。協調跨部門合作以達成業績目標。</td></tr>
-                                    <tr><td class="p-3 font-medium">後期</td><td class="p-3">業務總監/主管<button class="survey-btn" data-role="業務總監/主管">+</button></td><td class="p-3">負責公司整體市場布局，帶領業務團隊，參與公司高層決策，開拓新市場或業務。</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                     <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-green-600 text-white p-4">法規事務 (Regulatory Affairs, RA)</h3>
-                        <div class="p-4 md:p-6">
-                           <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-green-50">
-                                        <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[20%]">職涯階段</th>
-                                        <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[50%]">技能提升與發展重點</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">法規事務專員<button class="survey-btn" data-role="法規事務專員">+</button></td><td class="p-3">熟悉國內外醫材/藥品相關法規。學習文件彙整、資料庫管理、註冊送件流程。</td></tr>
-                                    <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深法規事務專員<button class="survey-btn" data-role="資深法規事務專員">+</button></td><td class="p-3">獨立負責產品註冊、許可證申請、變更報備。參與跨部門會議，提供法規諮詢。</td></tr>
-                                    <tr><td class="p-3 font-medium">後期</td><td class="p-3">法規事務經理/總監<button class="survey-btn" data-role="法規事務經理/總監">+</button></td><td class="p-3">負責公司整體法規策略規劃。建立與維護法規管理系統。領導法規團隊。</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+       function doPost(e) {
+         // 處理新增職業的請求
+         try {
+           const params = e.parameter;
+           const newRole = params.role;
+           
+           if (newRole) {
+             const ss = SpreadsheetApp.getActiveSpreadsheet();
+             let roleSheet = ss.getSheetByName("CustomRoles");
+             
+             // 如果找不到工作表，自動建立
+             if (!roleSheet) {
+               roleSheet = ss.insertSheet("CustomRoles");
+               roleSheet.appendRow(["RoleName", "Created At"]);
+             }
+             
+             // 加上時間戳記與新職業
+             roleSheet.appendRow([newRole, new Date()]);
+             
+             return ContentService.createTextOutput(JSON.stringify({status: "success", role: newRole}))
+               .setMimeType(ContentService.MimeType.JSON);
+           }
+         } catch (error) {
+           return ContentService.createTextOutput(JSON.stringify({status: "error", message: error.toString()}))
+               .setMimeType(ContentService.MimeType.JSON);
+         }
+       }
+       4. **部署為網路應用程式**：
+   a. 點擊右上角的藍色按鈕 `部署` > `管理部署作業` (如果您已經部署過)。
+   b. 點擊上方的 `編輯` (鉛筆圖示)。
+   c. **【關鍵步驟】** 在「版本」下拉選單中，選擇 `建立新版本`。
+   d. 點擊 `部署` 按鈕。
+   e. 複製更新後的網址 (通常網址不會變，但必須執行這個步驟程式碼才會更新)。
 
-                <!-- 公職與法人機構 -->
-                <div id="public" class="content-section space-y-6">
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-indigo-600 text-white p-4">司法鑑識</h3>
-                        <div class="p-4 md:p-6">
-                           <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-indigo-50">
-                                        <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[20%]">職涯階段</th>
-                                        <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[50%]">技能提升與發展重點</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">鑑識科學人員<button class="survey-btn" data-role="鑑識科學人員">+</button></td><td class="p-3">學習法醫毒物學、血清學、DNA鑑識等基礎技術。熟悉物證採集、保存與實驗室操作SOP。</td></tr>
-                                    <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深鑑識技術員<button class="survey-btn" data-role="資深鑑識技術員">+</button></td><td class="p-3">專精於特定鑑識領域。參與複雜案件的鑑識工作。協助撰寫鑑識報告並出庭作證。</td></tr>
-                                    <tr><td class="p-3 font-medium">後期</td><td class="p-3">鑑識科學專家/主管<button class="survey-btn" data-role="鑑識科學專家/主管">+</button></td><td class="p-3">領導鑑識團隊，指導困難案件的鑑識方向。參與新鑑識技術的研發與推廣。</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                     <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-indigo-600 text-white p-4">查驗登記審查員 (TFDA等)</h3>
-                        <div class="p-4 md:p-6">
-                           <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-indigo-50">
-                                        <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[20%]">職涯階段</th>
-                                        <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[50%]">技能提升與發展重點</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">查驗登記審查員<button class="survey-btn" data-role="查驗登記審查員">+</button></td><td class="p-3">熟悉相關法律法規。學習審查標準、文件要求。參與審查會議，負責簡單案件審核。</td></tr>
-                                    <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深審查員/股長<button class="survey-btn" data-role="資深審查員/股長">+</button></td><td class="p-3">獨立負責複雜的產品審查，包括新藥、新醫材。參與法規研修、標準制定。</td></tr>
-                                    <tr><td class="p-3 font-medium">後期</td><td class="p-3">科長/處長/專家<button class="survey-btn" data-role="科長/處長/專家">+</button></td><td class="p-3">負責部門營運管理、審查流程優化。參與國家藥品/醫材政策制定。</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+5. **更新下方 HTML 程式碼**：
+   a. 在下方的 `<script>` 區塊中，找到 `// --- Google Apps Script Configuration ---`。
+   b. 將 `const GOOGLE_SCRIPT_URL = '';` 中的單引號，替換成您剛剛複製的【網路應用程式網址】。
 
-                <!-- 學術研究 -->
-                <div id="academic" class="content-section space-y-6">
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-purple-600 text-white p-4">學術研究與教育</h3>
-                        <div class="p-4 md:p-6">
-                            <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-purple-50">
-                                        <th class="p-3 text-left font-semibold text-purple-800 border-b-2 border-purple-200 w-[20%]">職涯階段</th>
-                                        <th class="p-3 text-left font-semibold text-purple-800 border-b-2 border-purple-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-purple-800 border-b-2 border-purple-200 w-[50%]">技能提升與發展重點</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">碩/博士生/研究助理<button class="survey-btn" data-role="碩/博士生/研究助理">+</button></td><td class="p-3">奠定紮實的理論基礎與研究方法，學習數據分析、論文寫作、專案申請。</td></tr>
-                                    <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">博士後研究員/教職<button class="survey-btn" data-role="博士後研究員/教職">+</button></td><td class="p-3">獨立執行研究計畫，爭取研究經費。發表具影響力論文，建立學術聲譽。開始教學。</td></tr>
-                                    <tr><td class="p-3 font-medium">後期</td><td class="p-3">教授/研究中心主管<button class="survey-btn" data-role="教授/研究中心主管">+</button></td><td class="p-3">領導大型研究團隊，主導前瞻性研究。爭取國家級或國際級研究計畫。參與學術行政管理。</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 跨領域專業 -->
-                <div id="interdisciplinary" class="content-section space-y-6">
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-teal-600 text-white p-4">醫療資訊與大數據</h3>
-                        <div class="p-4 md:p-6">
-                           <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-teal-50">
-                                        <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[20%]">職涯階段</th>
-                                        <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[50%]">技能提升與發展重點</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">數據分析員<button class="survey-btn" data-role="數據分析員">+</button></td><td class="p-3">學習基礎程式語言 (如Python, R)、統計軟體。理解HIS/LIS系統結構。負責數據的收集、整理、初步分析。</td></tr>
-                                    <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">系統/生物統計分析師<button class="survey-btn" data-role="系統/生物統計分析師">+</button></td><td class="p-3">參與醫療資訊系統的開發與優化。設計數據庫結構，建立複雜的數據分析模型。</td></tr>
-                                    <tr><td class="p-3 font-medium">後期</td><td class="p-3">數據經理/策略顧問<button class="survey-btn" data-role="數據經理/策略顧問">+</button></td><td class="p-3">負責醫療大數據平台的建構與管理。利用數據挖掘與機器學習技術，支持臨床決策或醫院營運。</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-teal-600 text-white p-4">法律領域 - 生技產業專利師</h3>
-                        <div class="p-4 md:p-6">
-                           <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-teal-50">
-                                        <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[20%]">職涯階段</th>
-                                        <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[50%]">技能提升與發展重點</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">專利工程師<button class="survey-btn" data-role="專利工程師">+</button></td><td class="p-3">學習專利法規、申請流程、專利檢索與分析。熟悉生技醫藥領域的發明原理。準備考取專利師資格。</td></tr>
-                                    <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深專利師/代理人<button class="survey-btn" data-role="資深專利師/代理人">+</button></td><td class="p-3">獨立處理複雜的專利申請、答辯與異議案件。負責專利佈局、侵權分析。</td></tr>
-                                    <tr><td class="p-3 font-medium">後期</td><td class="p-3">專利經理/法務長<button class="survey-btn" data-role="專利經理/法務長">+</button></td><td class="p-3">負責公司整體專利策略制定與管理。處理國際專利事務、專利訴訟。領導團隊。</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-teal-600 text-white p-4">人資管理 - 獵頭顧問 (Head Hunter)</h3>
-                        <div class="p-4 md:p-6">
-                           <table class="w-full border-collapse">
-                                <thead>
-                                    <tr class="bg-teal-50">
-                                        <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[20%]">職涯階段</th>
-                                        <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[30%]">職位與發展路徑</th>
-                                        <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[50%]">技能提升與發展重點</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">研究員/助理顧問<button class="survey-btn" data-role="研究員/助理顧問">+</button></td><td class="p-3">深入了解生技醫療產業結構、主要公司與職位。學習市場調研、人才地圖繪製、初步候選人篩選。</td></tr>
-                                    <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">招募顧問<button class="survey-btn" data-role="招募顧問">+</button></td><td class="p-3">獨立負責客戶關係維護與拓展。精準理解客戶需求並成功媒合人才。提升談判、說服與解決問題的能力。</td></tr>
-                                    <tr><td class="p-3 font-medium">後期</td><td class="p-3">資深顧問/團隊主管<button class="survey-btn" data-role="資深顧問/團隊主管">+</button></td><td class="p-3">領導獵頭團隊，拓展新業務線。成為生技醫療領域的高階人才招募專家，提供策略性建議。</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                 <!-- 其他 -->
-                <div id="other" class="content-section space-y-6">
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                        <h3 class="text-xl font-bold bg-gray-600 text-white p-4">其他職業</h3>
-                        <div class="p-4 md:p-6">
-                            <p class="mb-4 text-gray-600">如果您從事的職業未在上方列出，請在此處新增，與大家分享！</p>
-                            <div class="flex gap-2 mb-6">
-                                <input type="text" id="new-role-input" placeholder="請輸入您的職業名稱" class="flex-grow p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500">
-                                <button id="add-role-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">新增職業</button>
-                            </div>
-                            <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-3">訪客新增的職業：</h4>
-                            <div id="other-roles-container" class="space-y-3">
-                                <!-- Dynamically added roles will appear here -->
-                                <p id="no-other-roles" class="text-gray-500">目前尚無新增職業。</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </div>
-
-        <!-- Charts Section -->
-        <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="chart-container bg-white rounded-lg shadow-md p-4 md:p-8">
-                <h2 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">核心能力比較分析</h2>
-                <div class="w-full max-w-3xl mx-auto">
-                    <canvas id="competencyRadarChart"></canvas>
-                </div>
-            </div>
-             <div class="chart-container bg-white rounded-lg shadow-md p-4 md:p-8">
-                <h2 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">訪客職涯背景分佈</h2>
-                <div id="survey-chart-container" class="w-full max-w-3xl mx-auto">
-                     <canvas id="surveyChart"></canvas>
-                     <p id="chart-loading-msg" class="text-center text-gray-500 mt-4">正在從後端載入即時數據...</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Deep Share Questionnaire Section -->
-        <div class="mt-12">
-            <div class="bg-white rounded-lg shadow-md p-6 md:p-10 text-center">
-                <h2 class="text-2xl md:text-3xl font-bold text-blue-800 mb-4">系友職涯深度分享</h2>
-                <p class="text-gray-600 text-lg mb-6">
-                    您是否願意分享更詳細的職涯發展故事，給學弟妹們更具體的啟發與幫助？<br>
-                    我們誠摯地感謝您無私的奉獻！
-                </p>
-                <a href="https://forms.gle/SSotUMAUUxj8ZQM19" 
-                   target="_blank" 
-                   rel="noopener noreferrer" 
-                   class="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-lg text-lg">
-                    點此填寫深度分享問卷
-                </a>
-            </div>
-        </div>
-
-    </div> <!-- End of container -->
+完成以上所有步驟後，您的網頁就能同步讀取和寫入資料了！
+==================================================================
+-->
+<style>
+    body {
+        font-family: 'Noto Sans TC', sans-serif;
+    }
+    .tab-button.active {
+        background-color: #1D4ED8; /* bg-blue-700 */
+        color: white;
+        font-weight: 700;
+    }
+    .content-section {
+        display: none;
+    }
+    .content-section.active {
+        display: block;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .content-section.active, .chart-container, .personas-section {
+        animation: fadeIn 0.5s ease-in-out;
+    }
     
-    <!-- Modal for Survey Confirmation -->
-    <div id="survey-confirm-modal" class="modal-overlay">
-        <div class="modal-content text-center">
-            <h3 class="text-2xl font-bold mb-4">確認職涯分享</h3>
-            <p class="text-gray-600 mb-8">您是否願意匿名分享此項職涯選擇，作為學弟妹未來發展的參考？</p>
-            <div class="flex justify-center gap-4">
-                 <button id="cancel-survey-btn" class="text-gray-600 bg-gray-200 font-bold py-2 px-8 rounded-lg hover:bg-gray-300 transition-colors">取消</button>
-                 <button id="confirm-survey-btn" class="bg-red-600 text-white font-bold py-2 px-8 rounded-lg hover:bg-red-700 transition-colors">確認</button>
+    /* Image fade transition */
+    #category-image {
+        transition: opacity 0.3s ease-in-out;
+        opacity: 1;
+    }
+    #category-image.fade-out {
+        opacity: 0;
+    }
+
+    .survey-btn {
+        background-color: #E0E7FF;
+        color: #3730A3;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-weight: bold;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 8px;
+        transition: all 0.2s ease-in-out;
+        border: 1px solid #C7D2FE;
+        cursor: pointer;
+    }
+    .survey-btn:hover {
+        background-color: #3730A3;
+        color: white;
+        transform: scale(1.1);
+    }
+    .survey-btn:active {
+        transform: scale(1);
+    }
+    #toast-notification {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #22C55E;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        z-index: 1001; /* Higher than modal */
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.5s, visibility 0.5s;
+    }
+    #toast-notification.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    /* Modal styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s, visibility 0.3s;
+    }
+    .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        width: 90%;
+        max-width: 500px;
+        transform: translateY(-20px);
+        transition: transform 0.3s;
+    }
+    .modal-overlay.show .modal-content {
+        transform: translateY(0);
+    }
+</style>
+</head> <body class="bg-gray-100 text-gray-800">
+
+<div class="container mx-auto p-4 md:p-8">
+    <header class="text-center mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold text-blue-800">醫學檢驗暨生物技術學系</h1>
+        <p class="text-xl md:text-2xl text-gray-600 mt-2">互動式職涯發展路徑總覽</p>
+    </header>
+
+    <!-- Visual Image Section -->
+    <div class="mb-8 rounded-lg shadow-lg overflow-hidden bg-white">
+        <!-- Default to main_visual.jpg, fallback to placeholder if not found -->
+        <img id="category-image" 
+             src="main_visual.jpg" 
+             onerror="this.onerror=null; this.src='https://placehold.co/1200x400/e2e8f0/1e40af?text=Main+Visual+Image+Missing';"
+             alt="職涯領域示意圖" 
+             class="w-full h-auto object-cover max-h-[400px] object-top">
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-8">
+        <!-- Left Navigation -->
+        <aside class="w-full md:w-1/4">
+            <nav id="career-nav" class="bg-white rounded-lg shadow-md p-4 sticky top-8">
+                <h2 class="text-lg font-bold text-gray-700 border-b pb-2 mb-3">職涯領域類別</h2>
+                <ul class="space-y-2">
+                    <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100 active" data-target="clinical">臨床醫療</button></li>
+                    <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100" data-target="biotech">生物科技產業</button></li>
+                    <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100" data-target="public">公職與法人機構</button></li>
+                    <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100" data-target="academic">學術研究</button></li>
+                    <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100" data-target="interdisciplinary">跨領域專業</button></li>
+                    <li><button class="tab-button w-full text-left p-3 rounded-md transition-colors duration-200 hover:bg-blue-100" data-target="other">其他</button></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Right Content -->
+        <main id="career-content" class="w-full md:w-3/4">
+            <!-- 臨床醫療 -->
+            <div id="clinical" class="content-section active space-y-6">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-blue-600 text-white p-4">臨床醫事檢驗</h3>
+                    <div class="p-4 md:p-6">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-blue-50">
+                                    <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[20%]">職涯階段</th>
+                                    <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[30%]">職位與發展路徑</th>
+                                    <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[50%]">技能提升與發展重點</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">醫事檢驗師<button class="survey-btn" data-role="醫事檢驗師">+</button></td><td class="p-3">熟悉各科室常規檢驗流程、儀器操作與維護、品質管制、異常判讀。 累積實務經驗。</td></tr>
+                                <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深/專科醫檢師<button class="survey-btn" data-role="資深/專科醫檢師">+</button></td><td class="p-3">專精於特定領域 (如：分子醫學、細胞病理、微生物等)，考取相關次專科證照。開始帶領新人、負責特定儀器或專案。</td></tr>
+                                <tr><td class="p-3 font-medium">後期</td><td class="p-3">實驗室主管<button class="survey-btn" data-role="實驗室主管">+</button></td><td class="p-3">負責實驗室全面管理、預算控制、人員培訓、新技術引進、品質管理系統建立與優化。與臨床醫師合作，參與醫院決策。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-blue-600 text-white p-4">胚胎技術 (生殖醫學)</h3>
+                    <div class="p-4 md:p-6">
+                       <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-blue-50">
+                                    <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[20%]">職涯階段</th>
+                                    <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[30%]">職位與發展路徑</th>
+                                    <th class="p-3 text-left font-semibold text-blue-800 border-b-2 border-blue-200 w-[50%]">技能提升與發展重點</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">胚胎技術員<button class="survey-btn" data-role="胚胎技術員">+</button></td><td class="p-3">熟悉胚胎培養、精卵處理、冷凍解凍等基本操作，遵守實驗室 SOP。累積大量實作經驗。</td></tr>
+                                <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深胚胎技術員<button class="survey-btn" data-role="資深胚胎技術員">+</button></td><td class="p-3">獨立完成高階胚胎操作技術 (如：ICSI)，負責實驗室品質管理與儀器維護。開始帶領新人。</td></tr>
+                                <tr><td class="p-3 font-medium">後期</td><td class="p-3">胚胎實驗室主管<button class="survey-btn" data-role="胚胎實驗室主管">+</button></td><td class="p-3">負責整個胚胎實驗室的運營管理、技術創新、團隊培訓。參與生殖醫學中心的策略規劃，導入新技術。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生物科技產業 -->
+            <div id="biotech" class="content-section space-y-6">
+                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-green-600 text-white p-4">研發 / 品保品管 (QC/QA)</h3>
+                    <div class="p-4 md:p-6">
+                       <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-green-50">
+                                    <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[20%]">職涯階段</th>
+                                    <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[30%]">職位與發展路徑</th>
+                                    <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[50%]">技能提升與發展重點</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">研發/QC/QA人員<button class="survey-btn" data-role="研發/QC/QA人員">+</button></td><td class="p-3">熟悉實驗室技術、產品開發流程、品管規範。</td></tr>
+                                <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深研發/專案經理<button class="survey-btn" data-role="資深研發/專案經理">+</button></td><td class="p-3">主導研發專案、產品線規劃與管理。管理團隊、協調跨部門合作。累積產業人脈。</td></tr>
+                                <tr><td class="p-3 font-medium">後期</td><td class="p-3">研發/產品總監<button class="survey-btn" data-role="研發/產品總監">+</button></td><td class="p-3">負責公司整體研發方向、產品策略。帶領大型團隊，參與公司高層決策。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-green-600 text-white p-4">行銷業務 (Sales & Marketing)</h3>
+                    <div class="p-4 md:p-6">
+                       <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-green-50">
+                                    <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[20%]">職涯階段</th>
+                                    <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[30%]">職位與發展路徑</th>
+                                    <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[50%]">技能提升與發展重點</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">業務技術專員<button class="survey-btn" data-role="業務技術專員">+</button></td><td class="p-3">學習產品知識、市場分析、客戶溝通與簡報技巧。</td></tr>
+                                <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">業務/產品經理<button class="survey-btn" data-role="業務/產品經理">+</button></td><td class="p-3">負責市場策略制定、客戶關係維護。協調跨部門合作以達成業績目標。</td></tr>
+                                <tr><td class="p-3 font-medium">後期</td><td class="p-3">業務總監/主管<button class="survey-btn" data-role="業務總監/主管">+</button></td><td class="p-3">負責公司整體市場布局，帶領業務團隊，參與公司高層決策，開拓新市場或業務。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-green-600 text-white p-4">法規事務 (Regulatory Affairs, RA)</h3>
+                    <div class="p-4 md:p-6">
+                       <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-green-50">
+                                    <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[20%]">職涯階段</th>
+                                    <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[30%]">職位與發展路徑</th>
+                                    <th class="p-3 text-left font-semibold text-green-800 border-b-2 border-green-200 w-[50%]">技能提升與發展重點</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">法規事務專員<button class="survey-btn" data-role="法規事務專員">+</button></td><td class="p-3">熟悉國內外醫材/藥品相關法規。學習文件彙整、資料庫管理、註冊送件流程。</td></tr>
+                                <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深法規事務專員<button class="survey-btn" data-role="資深法規事務專員">+</button></td><td class="p-3">獨立負責產品註冊、許可證申請、變更報備。參與跨部門會議，提供法規諮詢。</td></tr>
+                                <tr><td class="p-3 font-medium">後期</td><td class="p-3">法規事務經理/總監<button class="survey-btn" data-role="法規事務經理/總監">+</button></td><td class="p-3">負責公司整體法規策略規劃。建立與維護法規管理系統。領導法規團隊。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 公職與法人機構 -->
+            <div id="public" class="content-section space-y-6">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-indigo-600 text-white p-4">司法鑑識</h3>
+                    <div class="p-4 md:p-6">
+                       <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-indigo-50">
+                                    <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[20%]">職涯階段</th>
+                                    <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[30%]">職位與發展路徑</th>
+                                    <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[50%]">技能提升與發展重點</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">鑑識科學人員<button class="survey-btn" data-role="鑑識科學人員">+</button></td><td class="p-3">學習法醫毒物學、血清學、DNA鑑識等基礎技術。熟悉物證採集、保存與實驗室操作SOP。</td></tr>
+                                <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深鑑識技術員<button class="survey-btn" data-role="資深鑑識技術員">+</button></td><td class="p-3">專精於特定鑑識領域。參與複雜案件的鑑識工作。協助撰寫鑑識報告並出庭作證。</td></tr>
+                                <tr><td class="p-3 font-medium">後期</td><td class="p-3">鑑識科學專家/主管<button class="survey-btn" data-role="鑑識科學專家/主管">+</button></td><td class="p-3">領導鑑識團隊，指導困難案件的鑑識方向。參與新鑑識技術的研發與推廣。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-indigo-600 text-white p-4">查驗登記審查員 (TFDA等)</h3>
+                    <div class="p-4 md:p-6">
+                       <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-indigo-50">
+                                    <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[20%]">職涯階段</th>
+                                    <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[30%]">職位與發展路徑</th>
+                                    <th class="p-3 text-left font-semibold text-indigo-800 border-b-2 border-indigo-200 w-[50%]">技能提升與發展重點</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">查驗登記審查員<button class="survey-btn" data-role="查驗登記審查員">+</button></td><td class="p-3">熟悉相關法律法規。學習審查標準、文件要求。參與審查會議，負責簡單案件審核。</td></tr>
+                                <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深審查員/股長<button class="survey-btn" data-role="資深審查員/股長">+</button></td><td class="p-3">獨立負責複雜的產品審查，包括新藥、新醫材。參與法規研修、標準制定。</td></tr>
+                                <tr><td class="p-3 font-medium">後期</td><td class="p-3">科長/處長/專家<button class="survey-btn" data-role="科長/處長/專家">+</button></td><td class="p-3">負責部門營運管理、審查流程優化。參與國家藥品/醫材政策制定。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 學術研究 -->
+            <div id="academic" class="content-section space-y-6">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-purple-600 text-white p-4">學術研究與教育</h3>
+                    <div class="p-4 md:p-6">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-purple-50">
+                                    <th class="p-3 text-left font-semibold text-purple-800 border-b-2 border-purple-200 w-[20%]">職涯階段</th>
+                                    <th class="p-3 text-left font-semibold text-purple-800 border-b-2 border-purple-200 w-[30%]">職位與發展路徑</th>
+                                    <th class="p-3 text-left font-semibold text-purple-800 border-b-2 border-purple-200 w-[50%]">技能提升與發展重點</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">碩/博士生/研究助理<button class="survey-btn" data-role="碩/博士生/研究助理">+</button></td><td class="p-3">奠定紮實的理論基礎與研究方法，學習數據分析、論文寫作、專案申請。</td></tr>
+                                <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">博士後研究員/教職<button class="survey-btn" data-role="博士後研究員/教職">+</button></td><td class="p-3">獨立執行研究計畫，爭取研究經費。發表具影響力論文，建立學術聲譽。開始教學。</td></tr>
+                                <tr><td class="p-3 font-medium">後期</td><td class="p-3">教授/研究中心主管<button class="survey-btn" data-role="教授/研究中心主管">+</button></td><td class="p-3">領導大型研究團隊，主導前瞻性研究。爭取國家級或國際級研究計畫。參與學術行政管理。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 跨領域專業 -->
+            <div id="interdisciplinary" class="content-section space-y-6">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-teal-600 text-white p-4">醫療資訊與大數據</h3>
+                    <div class="p-4 md:p-6">
+                       <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-teal-50">
+                                    <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[20%]">職涯階段</th>
+                                    <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[30%]">職位與發展路徑</th>
+                                    <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[50%]">技能提升與發展重點</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">數據分析員<button class="survey-btn" data-role="數據分析員">+</button></td><td class="p-3">學習基礎程式語言 (如Python, R)、統計軟體。理解HIS/LIS系統結構。負責數據的收集、整理、初步分析。</td></tr>
+                                <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">系統/生物統計分析師<button class="survey-btn" data-role="系統/生物統計分析師">+</button></td><td class="p-3">參與醫療資訊系統的開發與優化。設計數據庫結構，建立複雜的數據分析模型。</td></tr>
+                                <tr><td class="p-3 font-medium">後期</td><td class="p-3">數據經理/策略顧問<button class="survey-btn" data-role="數據經理/策略顧問">+</button></td><td class="p-3">負責醫療大數據平台的建構與管理。利用數據挖掘與機器學習技術，支持臨床決策或醫院營運。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-teal-600 text-white p-4">法律領域 - 生技產業專利師</h3>
+                    <div class="p-4 md:p-6">
+                       <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-teal-50">
+                                    <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[20%]">職涯階段</th>
+                                    <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[30%]">職位與發展路徑</th>
+                                    <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[50%]">技能提升與發展重點</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">專利工程師<button class="survey-btn" data-role="專利工程師">+</button></td><td class="p-3">學習專利法規、申請流程、專利檢索與分析。熟悉生技醫藥領域的發明原理。準備考取專利師資格。</td></tr>
+                                <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">資深專利師/代理人<button class="survey-btn" data-role="資深專利師/代理人">+</button></td><td class="p-3">獨立處理複雜的專利申請、答辯與異議案件。負責專利佈局、侵權分析。</td></tr>
+                                <tr><td class="p-3 font-medium">後期</td><td class="p-3">專利經理/法務長<button class="survey-btn" data-role="專利經理/法務長">+</button></td><td class="p-3">負責公司整體專利策略制定與管理。處理國際專利事務、專利訴訟。領導團隊。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-teal-600 text-white p-4">人資管理 - 獵頭顧問 (Head Hunter)</h3>
+                    <div class="p-4 md:p-6">
+                       <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-teal-50">
+                                    <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[20%]">職涯階段</th>
+                                    <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[30%]">職位與發展路徑</th>
+                                    <th class="p-3 text-left font-semibold text-teal-800 border-b-2 border-teal-200 w-[50%]">技能提升與發展重點</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-medium">初期</td><td class="p-3">研究員/助理顧問<button class="survey-btn" data-role="研究員/助理顧問">+</button></td><td class="p-3">深入了解生技醫療產業結構、主要公司與職位。學習市場調研、人才地圖繪製、初步候選人篩選。</td></tr>
+                                <tr class="border-b bg-gray-50"><td class="p-3 font-medium">中期</td><td class="p-3">招募顧問<button class="survey-btn" data-role="招募顧問">+</button></td><td class="p-3">獨立負責客戶關係維護與拓展。精準理解客戶需求並成功媒合人才。提升談判、說服與解決問題的能力。</td></tr>
+                                <tr><td class="p-3 font-medium">後期</td><td class="p-3">資深顧問/團隊主管<button class="survey-btn" data-role="資深顧問/團隊主管">+</button></td><td class="p-3">領導獵頭團隊，拓展新業務線。成為生技醫療領域的高階人才招募專家，提供策略性建議。</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+             <!-- 其他 -->
+            <div id="other" class="content-section space-y-6">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <h3 class="text-xl font-bold bg-gray-600 text-white p-4">其他職業</h3>
+                    <div class="p-4 md:p-6">
+                        <p class="mb-4 text-gray-600">如果您從事的職業未在上方列出，請在此處新增，與大家分享！</p>
+                        <div class="flex gap-2 mb-6">
+                            <input type="text" id="new-role-input" placeholder="請輸入您的職業名稱" class="flex-grow p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <button id="add-role-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">新增職業</button>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-3">訪客新增的職業：</h4>
+                        <div id="other-roles-container" class="space-y-3">
+                            <!-- Dynamically added roles will appear here -->
+                            <p id="no-other-roles" class="text-gray-500">目前尚無新增職業。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="chart-container bg-white rounded-lg shadow-md p-4 md:p-8">
+            <h2 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">核心能力比較分析</h2>
+            <div class="w-full max-w-3xl mx-auto">
+                <canvas id="competencyRadarChart"></canvas>
+            </div>
+        </div>
+         <div class="chart-container bg-white rounded-lg shadow-md p-4 md:p-8">
+            <h2 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">訪客職涯背景分佈</h2>
+            <div id="survey-chart-container" class="w-full max-w-3xl mx-auto">
+                 <canvas id="surveyChart"></canvas>
+                 <p id="chart-loading-msg" class="text-center text-gray-500 mt-4">正在從後端載入即時數據...</p>
             </div>
         </div>
     </div>
 
-    <div id="toast-notification">感謝您的分享！</div>
+    <!-- Deep Share Questionnaire Section -->
+    <div class="mt-12">
+        <div class="bg-white rounded-lg shadow-md p-6 md:p-10 text-center">
+            <h2 class="text-2xl md:text-3xl font-bold text-blue-800 mb-4">系友職涯深度分享</h2>
+            <p class="text-gray-600 text-lg mb-6">
+                您是否願意分享更詳細的職涯發展故事，給學弟妹們更具體的啟發與幫助？<br>
+                我們誠摯地感謝您無私的奉獻！
+            </p>
+            <a href="https://forms.gle/SSotUMAUUxj8ZQM19" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               class="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-lg text-lg">
+                點此填寫深度分享問卷
+            </a>
+        </div>
+    </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // --- Google Apps Script Configuration ---
-            // 請依照頂部說明【設定三】，將您的 Apps Script 網路應用程式網址貼在下方
-            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxV9UQy0XeeQSBvgPznNgzjIAEzxSgnZgkJtf9zR_vfZyTMloBfPe_te1AdFZjSRrpz/exec';
+</div> <!-- End of container -->
 
-            // --- Google Form Configuration for Submission ---
-            const GOOGLE_FORM_ACTION_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdbzpcWIZ18mBpevvdFtZPuaSz4JmEetjhWKmNFtVSOHRNdPA/formResponse';
-            const GOOGLE_FORM_ROLE_ENTRY = 'entry.1048017994';
+<!-- Modal for Survey Confirmation -->
+<div id="survey-confirm-modal" class="modal-overlay">
+    <div class="modal-content text-center">
+        <h3 class="text-2xl font-bold mb-4">確認職涯分享</h3>
+        <p class="text-gray-600 mb-8">您是否願意匿名分享此項職涯選擇，作為學弟妹未來發展的參考？</p>
+        <div class="flex justify-center gap-4">
+             <button id="cancel-survey-btn" class="text-gray-600 bg-gray-200 font-bold py-2 px-8 rounded-lg hover:bg-gray-300 transition-colors">取消</button>
+             <button id="confirm-survey-btn" class="bg-red-600 text-white font-bold py-2 px-8 rounded-lg hover:bg-red-700 transition-colors">確認</button>
+        </div>
+    </div>
+</div>
 
-            // --- Chart.js Instance ---
-            let surveyChart = null;
-            
-            // --- Role Mapping ---
-            // Maps each role to { category: 'Category Name', stage: 'Stage Name' }
-            const roleMap = {
-                // Clinical
-                '醫事檢驗師': { category: '臨床醫療', stage: '初期' },
-                '胚胎技術員': { category: '臨床醫療', stage: '初期' },
-                '資深/專科醫檢師': { category: '臨床醫療', stage: '中期' },
-                '資深胚胎技術員': { category: '臨床醫療', stage: '中期' },
-                '實驗室主管': { category: '臨床醫療', stage: '後期' },
-                '胚胎實驗室主管': { category: '臨床醫療', stage: '後期' },
+<div id="toast-notification">感謝您的分享！</div>
 
-                // Biotech
-                '研發/QC/QA人員': { category: '生物科技產業', stage: '初期' },
-                '業務技術專員': { category: '生物科技產業', stage: '初期' },
-                '法規事務專員': { category: '生物科技產業', stage: '初期' },
-                '資深研發/專案經理': { category: '生物科技產業', stage: '中期' },
-                '業務/產品經理': { category: '生物科技產業', stage: '中期' },
-                '資深法規事務專員': { category: '生物科技產業', stage: '中期' },
-                '研發/產品總監': { category: '生物科技產業', stage: '後期' },
-                '業務總監/主管': { category: '生物科技產業', stage: '後期' },
-                '法規事務經理/總監': { category: '生物科技產業', stage: '後期' },
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- Google Apps Script Configuration ---
+        // 請依照頂部說明【設定三】，將您的 Apps Script 網路應用程式網址貼在下方
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxV9UQy0XeeQSBvgPznNgzjIAEzxSgnZgkJtf9zR_vfZyTMloBfPe_te1AdFZjSRrpz/exec';
 
-                // Public
-                '鑑識科學人員': { category: '公職與法人機構', stage: '初期' },
-                '查驗登記審查員': { category: '公職與法人機構', stage: '初期' },
-                '資深鑑識技術員': { category: '公職與法人機構', stage: '中期' },
-                '資深審查員/股長': { category: '公職與法人機構', stage: '中期' },
-                '鑑識科學專家/主管': { category: '公職與法人機構', stage: '後期' },
-                '科長/處長/專家': { category: '公職與法人機構', stage: '後期' },
+        // --- Google Form Configuration for Submission ---
+        const GOOGLE_FORM_ACTION_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdbzpcWIZ18mBpevvdFtZPuaSz4JmEetjhWKmNFtVSOHRNdPA/formResponse';
+        const GOOGLE_FORM_ROLE_ENTRY = 'entry.1048017994';
 
-                // Academic
-                '碩/博士生/研究助理': { category: '學術研究', stage: '初期' },
-                '博士後研究員/教職': { category: '學術研究', stage: '中期' },
-                '教授/研究中心主管': { category: '學術研究', stage: '後期' },
+        // --- Storage Keys ---
+        const customRolesStorageKey = 'careerCustomRoles_v2';
 
-                // Interdisciplinary
-                '數據分析員': { category: '跨領域專業', stage: '初期' },
-                '專利工程師': { category: '跨領域專業', stage: '初期' },
-                '研究員/助理顧問': { category: '跨領域專業', stage: '初期' },
-                '系統/生物統計分析師': { category: '跨領域專業', stage: '中期' },
-                '資深專利師/代理人': { category: '跨領域專業', stage: '中期' },
-                '招募顧問': { category: '跨領域專業', stage: '中期' },
-                '數據經理/策略顧問': { category: '跨領域專業', stage: '後期' },
-                '專利經理/法務長': { category: '跨領域專業', stage: '後期' },
-                '資深顧問/團隊主管': { category: '跨領域專業', stage: '後期' }
-            };
+        // --- Chart.js Instance ---
+        let surveyChart = null;
+        
+        // --- Role Mapping ---
+        // Maps each role to { category: 'Category Name', stage: 'Stage Name' }
+        const roleMap = {
+            // Clinical
+            '醫事檢驗師': { category: '臨床醫療', stage: '初期' },
+            '胚胎技術員': { category: '臨床醫療', stage: '初期' },
+            '資深/專科醫檢師': { category: '臨床醫療', stage: '中期' },
+            '資深胚胎技術員': { category: '臨床醫療', stage: '中期' },
+            '實驗室主管': { category: '臨床醫療', stage: '後期' },
+            '胚胎實驗室主管': { category: '臨床醫療', stage: '後期' },
 
-            const categories = ['臨床醫療', '生物科技產業', '公職與法人機構', '學術研究', '跨領域專業', '其他'];
-            
-            // --- Image Mapping ---
-            // Map tab IDs (from data-target) to Image URLs
-            const imageMap = {
-                'default': 'main_visual.jpg',
-                'clinical': 'clinical.jpg',
-                'biotech': 'biotech.jpg',
-                'public': 'public.jpg',
-                'academic': 'academic.jpg',
-                'interdisciplinary': 'interdisciplinary.jpg',
-                'other': 'main_visual.jpg' // Fallback to default
-            };
+            // Biotech
+            '研發/QC/QA人員': { category: '生物科技產業', stage: '初期' },
+            '業務技術專員': { category: '生物科技產業', stage: '初期' },
+            '法規事務專員': { category: '生物科技產業', stage: '初期' },
+            '資深研發/專案經理': { category: '生物科技產業', stage: '中期' },
+            '業務/產品經理': { category: '生物科技產業', stage: '中期' },
+            '資深法規事務專員': { category: '生物科技產業', stage: '中期' },
+            '研發/產品總監': { category: '生物科技產業', stage: '後期' },
+            '業務總監/主管': { category: '生物科技產業', stage: '後期' },
+            '法規事務經理/總監': { category: '生物科技產業', stage: '後期' },
 
-            const categoryImage = document.getElementById('category-image');
+            // Public
+            '鑑識科學人員': { category: '公職與法人機構', stage: '初期' },
+            '查驗登記審查員': { category: '公職與法人機構', stage: '初期' },
+            '資深鑑識技術員': { category: '公職與法人機構', stage: '中期' },
+            '資深審查員/股長': { category: '公職與法人機構', stage: '中期' },
+            '鑑識科學專家/主管': { category: '公職與法人機構', stage: '後期' },
+            '科長/處長/專家': { category: '公職與法人機構', stage: '後期' },
 
-            // --- Tab navigation script ---
-            const nav = document.getElementById('career-nav');
-            const contentSections = document.querySelectorAll('.content-section');
-            const navButtons = nav.querySelectorAll('.tab-button');
+            // Academic
+            '碩/博士生/研究助理': { category: '學術研究', stage: '初期' },
+            '博士後研究員/教職': { category: '學術研究', stage: '中期' },
+            '教授/研究中心主管': { category: '學術研究', stage: '後期' },
 
-            if (nav) {
-                nav.addEventListener('click', (e) => {
-                    if (e.target.tagName === 'BUTTON') {
-                        const targetId = e.target.dataset.target;
-                        
-                        // Update active state
-                        navButtons.forEach(btn => btn.classList.remove('active'));
-                        e.target.classList.add('active');
-                        
-                        // Show content
-                        contentSections.forEach(section => section.classList.remove('active'));
-                        const targetSection = document.getElementById(targetId);
-                        if (targetSection) {
-                            targetSection.classList.add('active');
-                        }
+            // Interdisciplinary
+            '數據分析員': { category: '跨領域專業', stage: '初期' },
+            '專利工程師': { category: '跨領域專業', stage: '初期' },
+            '研究員/助理顧問': { category: '跨領域專業', stage: '初期' },
+            '系統/生物統計分析師': { category: '跨領域專業', stage: '中期' },
+            '資深專利師/代理人': { category: '跨領域專業', stage: '中期' },
+            '招募顧問': { category: '跨領域專業', stage: '中期' },
+            '數據經理/策略顧問': { category: '跨領域專業', stage: '後期' },
+            '專利經理/法務長': { category: '跨領域專業', stage: '後期' },
+            '資深顧問/團隊主管': { category: '跨領域專業', stage: '後期' }
+        };
 
-                        // Update Image with fade effect
-                        if (categoryImage) {
-                            const newSrc = imageMap[targetId] || imageMap['default'];
-                            if (categoryImage.src !== newSrc) {
-                                categoryImage.classList.add('fade-out');
-                                setTimeout(() => {
-                                    categoryImage.src = newSrc;
-                                    categoryImage.onload = () => {
-                                        categoryImage.classList.remove('fade-out');
-                                    };
-                                    // Add error handler dynamically for new images
-                                    categoryImage.onerror = function() {
-                                        this.onerror = null;
-                                        this.src = 'https://placehold.co/1200x400/e2e8f0/1e40af?text=' + (targetId.charAt(0).toUpperCase() + targetId.slice(1)) + '+Image+Missing';
-                                        this.classList.remove('fade-out');
-                                    };
-                                }, 300); // Wait for fade out animation
-                            }
-                        }
-                    }
-                });
-            }
+        const categories = ['臨床醫療', '生物科技產業', '公職與法人機構', '學術研究', '跨領域專業', '其他'];
+        
+        // --- Image Mapping ---
+        // Map tab IDs (from data-target) to Image URLs
+        const imageMap = {
+            'default': 'main_visual.jpg',
+            'clinical': 'clinical.jpg',
+            'biotech': 'biotech.jpg',
+            'public': 'public.jpg',
+            'academic': 'academic.jpg',
+            'interdisciplinary': 'interdisciplinary.jpg',
+            'other': 'main_visual.jpg' // Fallback to default
+        };
 
-            // --- Radar Chart script ---
-            const radarCtx = document.getElementById('competencyRadarChart');
-            if (radarCtx) {
-                new Chart(radarCtx.getContext('2d'), {
-                    type: 'radar',
-                    data: {
-                        labels: ['實驗操作與品管', '法規知識與應用', '數據分析能力', '溝通協調能力', '管理領導能力', '研究創與新洞察'],
-                        datasets: [
-                            { label: '臨床醫療', data: [9, 5, 6, 7, 6, 4], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: 'rgba(59, 130, 246, 1)', pointBackgroundColor: 'rgba(59, 130, 246, 1)'},
-                            { label: '生物科技產業', data: [7, 8, 7, 8, 7, 7], backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: 'rgba(16, 185, 129, 1)', pointBackgroundColor: 'rgba(16, 185, 129, 1)'},
-                            { label: '公職與法人機構', data: [4, 9, 6, 8, 7, 3], backgroundColor: 'rgba(139, 92, 246, 0.2)', borderColor: 'rgba(139, 92, 246, 1)', pointBackgroundColor: 'rgba(139, 92, 246, 1)'},
-                            { label: '學術研究', data: [8, 4, 8, 5, 5, 9], backgroundColor: 'rgba(168, 85, 247, 0.2)', borderColor: 'rgba(168, 85, 247, 1)', pointBackgroundColor: 'rgba(168, 85, 247, 1)'},
-                            { label: '跨領域專業', data: [3, 7, 9, 9, 8, 6], backgroundColor: 'rgba(20, 184, 166, 0.2)', borderColor: 'rgba(20, 184, 166, 1)', pointBackgroundColor: 'rgba(20, 184, 166, 1)'}
-                        ]
-                    },
-                    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top', labels: { font: { size: 14, family: "'Noto Sans TC', sans-serif" }}}, tooltip: { titleFont: { family: "'Noto Sans TC', sans-serif" }, bodyFont: { family: "'Noto Sans TC', sans-serif" }}}, scales: { r: { suggestedMin: 0, suggestedMax: 10, pointLabels: { font: { size: 13, family: "'Noto Sans TC', sans-serif" }}, ticks: { stepSize: 2 }}}}
-                });
-            }
-            
-            // --- Fetch & Render Chart & Custom Roles Logic ---
-            async function fetchData() {
-                const loadingMsg = document.getElementById('chart-loading-msg');
-                if (!GOOGLE_SCRIPT_URL) {
-                    if(loadingMsg) loadingMsg.innerText = '錯誤：尚未設定 Google Apps Script 網址！';
-                    return;
-                }
-                if(loadingMsg) loadingMsg.style.display = 'block';
+        const categoryImage = document.getElementById('category-image');
 
-                try {
-                    const response = await fetch(GOOGLE_SCRIPT_URL);
-                    const data = await response.json();
+        // --- Tab navigation script ---
+        const nav = document.getElementById('career-nav');
+        const contentSections = document.querySelectorAll('.content-section');
+        const navButtons = nav.querySelectorAll('.tab-button');
+
+        if (nav) {
+            nav.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    const targetId = e.target.dataset.target;
                     
-                    // --- 1. Render Custom Roles List ---
-                    const customRoles = data.customRoles || [];
-                    const container = document.getElementById('other-roles-container');
-                    const noRolesMsg = document.getElementById('no-other-roles');
+                    // Update active state
+                    navButtons.forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
                     
-                    // Clear previous dynamic entries (keep noRolesMsg)
-                    while (container.firstChild && container.firstChild !== noRolesMsg) {
-                        container.removeChild(container.firstChild);
-                    }
-                    
-                    if (customRoles.length === 0) {
-                        if(noRolesMsg) noRolesMsg.style.display = 'block';
-                    } else {
-                        if(noRolesMsg) noRolesMsg.style.display = 'none';
-                        customRoles.forEach(role => {
-                            const roleEl = document.createElement('div');
-                            roleEl.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md';
-                            roleEl.innerHTML = `
-                                <span class="text-gray-800">${role}</span>
-                                <button class="survey-btn" data-role="${role}">+</button>
-                            `;
-                            container.insertBefore(roleEl, noRolesMsg);
-                        });
+                    // Show content
+                    contentSections.forEach(section => section.classList.remove('active'));
+                    const targetSection = document.getElementById(targetId);
+                    if (targetSection) {
+                        targetSection.classList.add('active');
                     }
 
-                    // --- 2. Process & Render Chart Data ---
-                    const rawCounts = data.counts || {};
-                    const categoryStageCounts = {};
-                    categories.forEach(cat => {
-                        categoryStageCounts[cat] = { '初期': 0, '中期': 0, '後期': 0 };
-                    });
-
-                    for (const [role, count] of Object.entries(rawCounts)) {
-                        const info = roleMap[role];
-                        if (info) {
-                            categoryStageCounts[info.category][info.stage] += count;
-                        } else {
-                            // User added 'Other' roles -> '其他' category, '初期' stage (as default)
-                            categoryStageCounts['其他']['初期'] += count;
+                    // Update Image with fade effect
+                    if (categoryImage) {
+                        const newSrc = imageMap[targetId] || imageMap['default'];
+                        if (categoryImage.src !== newSrc) {
+                            categoryImage.classList.add('fade-out');
+                            setTimeout(() => {
+                                categoryImage.src = newSrc;
+                                categoryImage.onload = () => {
+                                    categoryImage.classList.remove('fade-out');
+                                };
+                                // Add error handler dynamically for new images
+                                categoryImage.onerror = function() {
+                                    this.onerror = null;
+                                    this.src = 'https://placehold.co/1200x400/e2e8f0/1e40af?text=' + (targetId.charAt(0).toUpperCase() + targetId.slice(1)) + '+Image+Missing';
+                                    this.classList.remove('fade-out');
+                                };
+                            }, 300); // Wait for fade out animation
                         }
                     }
-
-                    const labels = categories;
-                    // Prepare stacked datasets
-                    // Colors: Light -> Medium -> Dark
-                    const colorSchemes = {
-                        '臨床醫療': ['#93C5FD', '#3B82F6', '#1E40AF'], // Blue
-                        '生物科技產業': ['#6EE7B7', '#10B981', '#047857'], // Green
-                        '公職與法人機構': ['#A5B4FC', '#6366F1', '#4338CA'], // Indigo
-                        '學術研究': ['#D8B4FE', '#A855F7', '#7E22CE'], // Purple
-                        '跨領域專業': ['#5EEAD4', '#14B8A6', '#0F766E'], // Teal
-                        '其他': ['#D1D5DB', '#9CA3AF', '#4B5563'] // Gray
-                    };
-
-                    const stages = ['初期', '中期', '後期'];
-                    const datasets = stages.map((stage, index) => {
-                        return {
-                            label: stage,
-                            data: categories.map(cat => categoryStageCounts[cat][stage]),
-                            backgroundColor: categories.map(cat => colorSchemes[cat][index]),
-                            borderWidth: 0,
-                            stack: 'stack1'
-                        };
-                    });
-
-                    const surveyCtx = document.getElementById('surveyChart').getContext('2d');
-                    if (surveyChart) {
-                        surveyChart.destroy();
-                    }
-                    surveyChart = new Chart(surveyCtx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: datasets
-                        },
-                        options: {
-                            indexAxis: 'y', // Horizontal bar chart
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { 
-                                    display: true, 
-                                    position: 'bottom' 
-                                }, 
-                                tooltip: {
-                                    titleFont: { family: "'Noto Sans TC', sans-serif" },
-                                    bodyFont: { family: "'Noto Sans TC', sans-serif" }
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    stacked: true, // Enable stacking
-                                    beginAtZero: true,
-                                    ticks: {
-                                        stepSize: 1
-                                    }
-                                },
-                                y: {
-                                    stacked: true, // Enable stacking
-                                    ticks: {
-                                        font: {
-                                            family: "'Noto Sans TC', sans-serif",
-                                            size: 14,
-                                            weight: 'bold'
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                     if(loadingMsg) loadingMsg.style.display = 'none';
-
-                } catch (error) {
-                    console.error('Error fetching data:', error);
-                    if(loadingMsg) loadingMsg.innerText = '讀取數據失敗，請檢查設定或稍後再試。';
-                }
-            }
-
-
-            // --- Survey & Modal Logic ---
-            const surveyModal = document.getElementById('survey-confirm-modal');
-            const confirmSurveyBtn = document.getElementById('confirm-survey-btn');
-            const cancelSurveyBtn = document.getElementById('cancel-survey-btn');
-            let roleToSubmit = '';
-            
-            function openSurveyModal(role) {
-                roleToSubmit = role;
-                if (surveyModal) surveyModal.classList.add('show');
-            }
-
-            function closeSurveyModal() {
-                if (surveyModal) surveyModal.classList.remove('show');
-                roleToSubmit = '';
-            }
-            
-            function handleAddRole() {
-                const input = document.getElementById('new-role-input');
-                if (!input) return;
-                const newRole = input.value.trim();
-
-                if (!newRole) {
-                    alert('請輸入職業名稱！');
-                    return;
-                }
-                
-                // Submit new role via Web App (doPost)
-                const formData = new FormData();
-                formData.append('role', newRole);
-                
-                fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.status === 'success') {
-                        showToast('新增成功！');
-                        input.value = '';
-                        fetchData(); // Refresh list and chart
-                    } else {
-                        alert('新增失敗，請稍後再試。');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error adding role:', error);
-                    alert('發生錯誤，請檢查網路連線。');
-                });
-            }
-
-            async function handleSurveySubmit(role) {
-                if (!role) return;
-
-                const formData = new FormData();
-                formData.append(GOOGLE_FORM_ROLE_ENTRY, role);
-
-                try {
-                    await fetch(GOOGLE_FORM_ACTION_URL, {
-                        method: 'POST',
-                        body: formData,
-                        mode: 'no-cors'
-                    });
-                } catch (error) {
-                    console.error('Form submission error:', error);
-                }
-                
-                showToast('感謝您的分享！');
-                // Add a small delay to allow Google Sheet to update before refetching
-                setTimeout(fetchData, 2000);
-            }
-            
-            function showToast(msg) {
-                const toast = document.getElementById('toast-notification');
-                if(toast){
-                    toast.innerText = msg;
-                    toast.classList.add('show');
-                    setTimeout(() => {
-                        toast.classList.remove('show');
-                    }, 2000);
-                }
-            }
-
-            // --- Event Listeners ---
-            document.body.addEventListener('click', function(e) {
-                if (e.target && e.target.classList.contains('survey-btn')) {
-                    const role = e.target.dataset.role;
-                    if (role) openSurveyModal(role);
                 }
             });
-            
-            if (confirmSurveyBtn) {
-                confirmSurveyBtn.addEventListener('click', async () => {
-                    await handleSurveySubmit(roleToSubmit);
-                    closeSurveyModal();
+        }
+
+        // --- Radar Chart script ---
+        const radarCtx = document.getElementById('competencyRadarChart');
+        if (radarCtx) {
+            new Chart(radarCtx.getContext('2d'), {
+                type: 'radar',
+                data: {
+                    labels: ['實驗操作與品管', '法規知識與應用', '數據分析能力', '溝通協調能力', '管理領導能力', '研究創與新洞察'],
+                    datasets: [
+                        { label: '臨床醫療', data: [9, 5, 6, 7, 6, 4], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: 'rgba(59, 130, 246, 1)', pointBackgroundColor: 'rgba(59, 130, 246, 1)'},
+                        { label: '生物科技產業', data: [7, 8, 7, 8, 7, 7], backgroundColor: 'rgba(16, 185, 129, 0.2)', borderColor: 'rgba(16, 185, 129, 1)', pointBackgroundColor: 'rgba(16, 185, 129, 1)'},
+                        { label: '公職與法人機構', data: [4, 9, 6, 8, 7, 3], backgroundColor: 'rgba(139, 92, 246, 0.2)', borderColor: 'rgba(139, 92, 246, 1)', pointBackgroundColor: 'rgba(139, 92, 246, 1)'},
+                        { label: '學術研究', data: [8, 4, 8, 5, 5, 9], backgroundColor: 'rgba(168, 85, 247, 0.2)', borderColor: 'rgba(168, 85, 247, 1)', pointBackgroundColor: 'rgba(168, 85, 247, 1)'},
+                        { label: '跨領域專業', data: [3, 7, 9, 9, 8, 6], backgroundColor: 'rgba(20, 184, 166, 0.2)', borderColor: 'rgba(20, 184, 166, 1)', pointBackgroundColor: 'rgba(20, 184, 166, 1)'}
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top', labels: { font: { size: 14, family: "'Noto Sans TC', sans-serif" }}}, tooltip: { titleFont: { family: "'Noto Sans TC', sans-serif" }, bodyFont: { family: "'Noto Sans TC', sans-serif" }}}, scales: { r: { suggestedMin: 0, suggestedMax: 10, pointLabels: { font: { size: 13, family: "'Noto Sans TC', sans-serif" }}, ticks: { stepSize: 2 }}}}
+            });
+        }
+        
+        // --- Fetch & Render Chart & Custom Roles Logic ---
+        async function fetchData() {
+            const loadingMsg = document.getElementById('chart-loading-msg');
+            if (!GOOGLE_SCRIPT_URL) {
+                if(loadingMsg) loadingMsg.innerText = '錯誤：尚未設定 Google Apps Script 網址！';
+                return;
+            }
+            if(loadingMsg) loadingMsg.style.display = 'block';
+
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL);
+                const data = await response.json();
+                
+                // --- 1. Render Custom Roles List ---
+                const customRoles = data.customRoles || [];
+                const container = document.getElementById('other-roles-container');
+                const noRolesMsg = document.getElementById('no-other-roles');
+                
+                // Clear previous dynamic entries (keep noRolesMsg)
+                while (container.firstChild && container.firstChild !== noRolesMsg) {
+                    container.removeChild(container.firstChild);
+                }
+                
+                if (customRoles.length === 0) {
+                    if(noRolesMsg) noRolesMsg.style.display = 'block';
+                } else {
+                    if(noRolesMsg) noRolesMsg.style.display = 'none';
+                    customRoles.forEach(role => {
+                        const roleEl = document.createElement('div');
+                        roleEl.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md';
+                        roleEl.innerHTML = `
+                            <span class="text-gray-800">${role}</span>
+                            <button class="survey-btn" data-role="${role}">+</button>
+                        `;
+                        container.insertBefore(roleEl, noRolesMsg);
+                    });
+                }
+
+                // --- 2. Process & Render Chart Data ---
+                const rawCounts = data.counts || {};
+                const categoryStageCounts = {};
+                categories.forEach(cat => {
+                    categoryStageCounts[cat] = { '初期': 0, '中期': 0, '後期': 0 };
                 });
-            }
 
-            if (cancelSurveyBtn) cancelSurveyBtn.addEventListener('click', closeSurveyModal);
-            if (surveyModal) surveyModal.addEventListener('click', (e) => { if (e.target === surveyModal) closeSurveyModal(); });
+                for (const [role, count] of Object.entries(rawCounts)) {
+                    const info = roleMap[role];
+                    if (info) {
+                        categoryStageCounts[info.category][info.stage] += count;
+                    } else {
+                        // User added 'Other' roles -> '其他' category, '初期' stage (as default)
+                        categoryStageCounts['其他']['初期'] += count;
+                    }
+                }
+
+                const labels = categories;
+                // Prepare stacked datasets
+                // Colors: Light -> Medium -> Dark
+                const colorSchemes = {
+                    '臨床醫療': ['#93C5FD', '#3B82F6', '#1E40AF'], // Blue
+                    '生物科技產業': ['#6EE7B7', '#10B981', '#047857'], // Green
+                    '公職與法人機構': ['#A5B4FC', '#6366F1', '#4338CA'], // Indigo
+                    '學術研究': ['#D8B4FE', '#A855F7', '#7E22CE'], // Purple
+                    '跨領域專業': ['#5EEAD4', '#14B8A6', '#0F766E'], // Teal
+                    '其他': ['#D1D5DB', '#9CA3AF', '#4B5563'] // Gray
+                };
+
+                const stages = ['初期', '中期', '後期'];
+                const datasets = stages.map((stage, index) => {
+                    return {
+                        label: stage,
+                        data: categories.map(cat => categoryStageCounts[cat][stage]),
+                        backgroundColor: categories.map(cat => colorSchemes[cat][index]),
+                        borderWidth: 0,
+                        stack: 'stack1'
+                    };
+                });
+
+                const surveyCtx = document.getElementById('surveyChart').getContext('2d');
+                if (surveyChart) {
+                    surveyChart.destroy();
+                }
+                surveyChart = new Chart(surveyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        indexAxis: 'y', // Horizontal bar chart
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                display: true, 
+                                position: 'bottom' 
+                            }, 
+                            tooltip: {
+                                titleFont: { family: "'Noto Sans TC', sans-serif" },
+                                bodyFont: { family: "'Noto Sans TC', sans-serif" }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true, // Enable stacking
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            },
+                            y: {
+                                stacked: true, // Enable stacking
+                                ticks: {
+                                    font: {
+                                        family: "'Noto Sans TC', sans-serif",
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                 if(loadingMsg) loadingMsg.style.display = 'none';
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                if(loadingMsg) loadingMsg.innerText = '讀取數據失敗，請檢查設定或稍後再試。';
+            }
+        }
+
+
+        // --- Survey & Modal Logic ---
+        const surveyModal = document.getElementById('survey-confirm-modal');
+        const confirmSurveyBtn = document.getElementById('confirm-survey-btn');
+        const cancelSurveyBtn = document.getElementById('cancel-survey-btn');
+        let roleToSubmit = '';
+        
+        function openSurveyModal(role) {
+            roleToSubmit = role;
+            if (surveyModal) surveyModal.classList.add('show');
+        }
+
+        function closeSurveyModal() {
+            if (surveyModal) surveyModal.classList.remove('show');
+            roleToSubmit = '';
+        }
+        
+        function handleAddRole() {
+            const input = document.getElementById('new-role-input');
+            if (!input) return;
+            const newRole = input.value.trim();
+
+            if (!newRole) {
+                alert('請輸入職業名稱！');
+                return;
+            }
             
-            const addRoleBtn = document.getElementById('add-role-btn');
-            if (addRoleBtn) {
-                addRoleBtn.addEventListener('click', handleAddRole);
+            // Submit new role via Web App (doPost)
+            const formData = new FormData();
+            formData.append('role', newRole);
+            
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    showToast('新增成功！');
+                    input.value = '';
+                    // *** Auto-vote for the new role ***
+                    handleSurveySubmit(newRole); 
+                } else {
+                    alert('新增失敗，請稍後再試。');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding role:', error);
+                alert('發生錯誤，請檢查網路連線。');
+            });
+        }
+
+        async function handleSurveySubmit(role) {
+            if (!role) return;
+
+            const formData = new FormData();
+            formData.append(GOOGLE_FORM_ROLE_ENTRY, role);
+
+            try {
+                await fetch(GOOGLE_FORM_ACTION_URL, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'no-cors'
+                });
+            } catch (error) {
+                console.error('Form submission error:', error);
             }
+            
+            showToast('感謝您的分享！');
+            // Add a small delay to allow Google Sheet to update before refetching
+            setTimeout(fetchData, 2000);
+        }
+        
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notification');
+            if(toast){
+                toast.innerText = msg;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2000);
+            }
+        }
 
-            // --- Initial Render ---
-            fetchData();
+        // --- Event Listeners ---
+        document.body.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('survey-btn')) {
+                const role = e.target.dataset.role;
+                if (role) openSurveyModal(role);
+            }
         });
-    </script>
-</body>
-</html>
+        
+        if (confirmSurveyBtn) {
+            confirmSurveyBtn.addEventListener('click', async () => {
+                await handleSurveySubmit(roleToSubmit);
+                closeSurveyModal();
+            });
+        }
 
+        if (cancelSurveyBtn) cancelSurveyBtn.addEventListener('click', closeSurveyModal);
+        if (surveyModal) surveyModal.addEventListener('click', (e) => { if (e.target === surveyModal) closeSurveyModal(); });
+        
+        const addRoleBtn = document.getElementById('add-role-btn');
+        if (addRoleBtn) {
+            addRoleBtn.addEventListener('click', handleAddRole);
+        }
+
+        // --- Initial Render ---
+        fetchData();
+    });
+</script>
+</body> </html>
